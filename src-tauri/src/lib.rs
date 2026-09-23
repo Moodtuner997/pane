@@ -2391,7 +2391,7 @@ async fn fetch_usage(
             })
             .collect();
         let outcomes = telemetry::collapse_onenewapi_outcomes(outcomes);
-        tauri::async_runtime::spawn(telemetry::record(true, snap, outcomes));
+        tauri::async_runtime::spawn(telemetry::record(false, snap, outcomes) /* fork: telemetry off */);
     }
 
     for alert in alerts::evaluate(&all, &cfg) {
@@ -3134,6 +3134,10 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 async fn live_update_check(app: &tauri::AppHandle) -> Result<Option<String>, String> {
+    // Fork Moodtuner997: self-built, never replaced by upstream releases.
+    if true {
+        return Ok(None);
+    }
     Ok(build_updater(app)?
         .check()
         .await

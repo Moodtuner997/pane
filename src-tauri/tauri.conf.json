@@ -42,7 +42,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "publisher": "Pane",
     "copyright": "© 2026 Pane contributors (MIT)",
     "shortDescription": "AI usage limits in your system tray",
