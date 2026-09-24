@@ -61,7 +61,7 @@ VS Build Tools 2022 et Rust dans le dossier `dev` à la racine du disque D (`Bui
 npm install
 Stop-Process -Name pane -ErrorAction SilentlyContinue
 npm run tauri build          # ~6 min 30 au premier build (mesuré le 2026-09-23)
-& .\src-tauri\target\release\bundle\nsis\Pane_0.4.53_x64-setup.exe /S
+& (Get-ChildItem .\src-tauri\target\release\bundle\nsis\Pane_*_x64-setup.exe | Sort-Object LastWriteTime | Select-Object -Last 1).FullName /S
 ```
 
 Le numéro de version du setup suit `src-tauri/tauri.conf.json`. Installé dans
@@ -74,7 +74,7 @@ Le numéro de version du setup suit `src-tauri/tauri.conf.json`. Installé dans
   fait pareil : en cas de conflit, relancer `claude` / `codex login`.
 - **`package-lock.json` modifié par `npm install`** (version de npm différente de l'amont) :
   ne pas le committer.
-- **Disque C:** : il était saturé le 2026-09-23 (20 Mo). Vérifier `(Get-PSDrive C).Free`
+- **Disque C:** : petit, déjà arrivé à saturation. Vérifier `(Get-PSDrive C).Free`
   avant toute grosse installation ; `target/` (plusieurs Go) reste sur D:.
 - Ne jamais pousser `dev` ni ce fichier vers l'amont.
 
@@ -88,5 +88,5 @@ Le numéro de version du setup suit `src-tauri/tauri.conf.json`. Installé dans
   et les erreurs fournisseurs s'affichent. Fermer d'abord la version installée (même port 6736).
 - **Vérifier l'absence de télémétrie** : `Get-DnsClientCache | Where-Object Entry -match
   'posthog|trypane'` doit être vide ; `Test-Path $env:APPDATA\Pane\telemetry.json` → `False`.
-- État au 2026-09-23 : Claude OK ; Codex en erreur (`auth.json` du 2026-07-13, refaire
-  `codex login`) ; Copilot en erreur (pas d'abonnement, à masquer dans les réglages).
+- Copilot : pas d'abonnement, le masquer dans les réglages plutôt que déboguer son erreur. Un
+  fournisseur en `error` avec un fichier d'identifiants ancien se règle d'abord par un nouveau login.
