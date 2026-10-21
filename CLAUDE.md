@@ -14,8 +14,9 @@ contribuer en amont (issues, PR).
   (`git rev-list --count dev..upstream/main`), version installée et API locale (plus bas). En cas
   d'écart, la réalité gagne.
 - `main` : miroir de `upstream/main`, jamais de commit perso. `dev` : build perso =
-  `upstream/main` + patchs fork + ce fichier ; c'est ce qui est installé. Ne jamais pousser `dev`
-  ni ce fichier vers l'amont.
+  `upstream/main` + patchs fork + ce fichier ; c'est ce qui est installé. `origin` = le fork
+  `Moodtuner997/pane`, `upstream` = l'amont `ItsJazii/pane` : `dev` se pousse sur `origin` seul,
+  jamais vers l'amont, ce fichier non plus.
 - `fix/<n°-issue>` part de `upstream/main` (jamais de `dev`) → PR vers `ItsJazii/pane`. Règles amont
   (`CONTRIBUTING.md`) : issue d'abord, une PR = un changement, pas de nouvelle dépendance sans
   raison, jamais de télémétrie.
@@ -48,8 +49,9 @@ recompilation.
 Suivre l'amont (arbre propre d'abord, `git status` : `git rebase` refuse un arbre sale) :
 ```powershell
 git fetch upstream; git switch main; git merge --ff-only upstream/main; git push origin main
-git switch dev; git rebase main; git push --force-with-lease origin dev
+git switch dev; git tag backup/dev-<date>; git rebase main; git push --force-with-lease origin dev
 ```
+Le tag de sauvegarde reste local ; il permet de retrouver un patch fork perdu au rebase.
 Recompiler et réinstaller (toolchain Rust et VS Build Tools sur le disque de données, `RUSTUP_HOME`
 et `CARGO_HOME` en variables utilisateur ; ouvrir un terminal neuf) :
 ```powershell
@@ -73,7 +75,7 @@ réglages et caches dans `%APPDATA%\Pane\`.
   -match 'posthog|trypane'` vide n'est qu'un indice (le cache expire).
 - **Identifiants réécrits** : quand un jeton expire, Pane le renouvelle et réécrit le fichier
   d'identifiants de l'outil (copie `.pane-bak` faite avant). Claude Code fait pareil : en cas de
-  conflit, relancer `claude` ou `codex login`.
+  conflit, relancer l'outil concerné (par exemple `claude`) pour qu'il se reconnecte.
 - Un fournisseur sans abonnement se désactive dans les réglages plutôt que de déboguer son erreur.
 
 ## Erreurs à ne pas reproduire
@@ -85,8 +87,8 @@ réglages et caches dans `%APPDATA%\Pane\`.
   partiraient avec (constaté depuis le 2026-09-23).
 - Ne pas croire que `main` ou l'app installée suivent l'amont : sans rebase ni recompilation, aucun
   correctif amont n'arrive (retard mesuré en dizaines de versions le 2026-10-21).
-- Ne pas relancer un login pour un fournisseur abandonné : le désactiver (Codex et Copilot, octobre
-  2026).
+- Ne pas relancer un login pour un fournisseur qu'on n'utilise plus : le désactiver dans les
+  réglages (la liste des fournisseurs actifs vit dans `HANDOFF.md`).
 
 ## Où est l'état
 `HANDOFF.md` local (non versionné) et `git log`.
