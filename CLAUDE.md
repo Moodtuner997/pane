@@ -1,94 +1,25 @@
-# CLAUDE.md — fork Pane (Moodtuner997/pane)
+# Pane
 
-Fichier propre au fork, sur `dev` seulement : ne jamais l'inclure dans une PR vers l'amont. Le
-dépôt est public : rien de personnel ni d'infrastructure privée ici.
+## Règles inconditionnelles
+- Fork public d'`ItsJazii/pane` : `CLAUDE.md`, `docs/fork.md` et les patchs fork restent sur `dev`, jamais dans une PR vers l'amont ; rien de personnel ni d'infrastructure privée dans le dépôt.
+- `main` = miroir de `upstream/main`, jamais de commit perso ; `dev` se pousse sur `origin` seul ; correctif amont = `fix/<n°-issue>` depuis `upstream/main`, issue d'abord, une PR = un changement, jamais de télémétrie.
+- Patchs fork (mises à jour auto et télémétrie coupées) à préserver à chaque rebase, avec leur contrôle : `docs/fork.md` ; un nouveau fournisseur exige sa section dans `docs/providers.md`.
+- Jamais lire ni committer les fichiers d'identifiants des fournisseurs ni leurs copies (`.credentials.json`, `.credentials.json.pane-bak`, `auth.json`).
+- `git add` fichier par fichier : `package-lock.json` et `src-tauri/Cargo.toml` sont salis par `npm install` et le build, ne pas les committer.
 
-Pane (`ItsJazii/pane`, MIT) est un portage Windows d'OpenUsage : icône dans la zone de notification,
-limites de session 5 h et hebdomadaires des abonnements IA, dates de remise à zéro. Ce fork existe
-pour (1) tourner sans mises à jour automatiques ni télémétrie, (2) corriger nous-mêmes et
-contribuer en amont (issues, PR).
+<!-- gen:debut -->
+Dépôt `Moodtuner997/pane` (projet `pane`, pane, statut actif). Déploiement : aucun (pas de déploiement).
+Avant toute action : `gh issue list --label etat` (l'issue État, vérité opérationnelle), `git fetch --prune`, `just --list` (points d'entrée uniformes : test, lint, dev, build, deploy-staging).
+Tâches = issues GitHub ; état du dépôt = issue épinglée État ; mémoire longue = nœud `02-projets/pane.md` du second cerveau. Rien d'autre ne fait foi.
+Enveloppe : PR vers `dev`, fusion si CI verte ; `staging` et `main` n'avancent que par tag (release.yml, release.sh). Secrets jamais lus. Généré par scripts/claude-md-gen.py : ne pas éditer ce bloc.
+<!-- gen:fin -->
 
-## Avant toute action
-- Lire `HANDOFF.md` s'il existe (non versionné, exclu par `.git/info/exclude`), puis vérifier
-  l'état réel : `git fetch --prune; git fetch upstream`, `git log -5 dev`, retard sur l'amont
-  (`git rev-list --count dev..upstream/main`), version installée et API locale (plus bas). En cas
-  d'écart, la réalité gagne.
-- `main` : miroir de `upstream/main`, jamais de commit perso. `dev` : build perso =
-  `upstream/main` + patchs fork + ce fichier ; c'est ce qui est installé. `origin` = le fork
-  `Moodtuner997/pane`, `upstream` = l'amont `ItsJazii/pane` : `dev` se pousse sur `origin` seul,
-  jamais vers l'amont, ce fichier non plus.
-- `fix/<n°-issue>` part de `upstream/main` (jamais de `dev`) → PR vers `ItsJazii/pane`. Règles amont
-  (`CONTRIBUTING.md`) : issue d'abord, une PR = un changement, pas de nouvelle dépendance sans
-  raison, jamais de télémétrie.
-- Ne jamais lire ni committer les fichiers d'identifiants des fournisseurs ni leurs copies
-  (`~\.claude\.credentials.json`, `.credentials.json.pane-bak`, `~\.codex\auth.json`).
-- `git add` fichier par fichier : `npm install` et le build salissent `package-lock.json` (version
-  de npm différente de l'amont) et `src-tauri/Cargo.toml` (fins de ligne) ; ne pas les committer.
-
-## Ce que fait l'app
-Tauri 2 : cœur Rust (`src-tauri/src/`, un module par fournisseur dans `providers/`), interface
-TypeScript/Vite (`src/main.ts`). À intervalle réglable, chaque fournisseur activé lit les
-identifiants déjà posés par l'outil officiel et appelle l'API de ce fournisseur (Claude :
-`api.anthropic.com/api/oauth/usage`). Appels réseau : `docs/privacy.md` (sans télémétrie ni mise à
-jour, il reste les API des fournisseurs et les tables de prix) ; par fournisseur :
-`docs/providers.md`. Un nouveau fournisseur exige sa section dans `docs/providers.md`.
-
-## Patchs fork (sur `dev`, à préserver à chaque rebase)
-| Fichier | Patch | Effet |
-|---|---|---|
-| `src-tauri/src/lib.rs` `live_update_check` | `return Ok(None)` en tête | jamais de bannière ni d'installation d'une release amont |
-| `src-tauri/src/lib.rs` refresh | `telemetry::record(false, …)` | rien envoyé à PostHog, `%APPDATA%\Pane\telemetry.json` supprimé |
-| `src-tauri/tauri.conf.json` | `createUpdaterArtifacts: false` | le build ne réclame pas la clé de signature amont |
-
-Après chaque rebase : `git grep -n 'telemetry::record(' -- src-tauri/src/lib.rs` ne doit montrer que
-`false`, `live_update_check` commence par `return Ok(None)`, `createUpdaterArtifacts` vaut `false`.
-Conséquence assumée : **pas de mise à jour automatique**. Nouvelle version amont = rebase +
-recompilation.
-
-## Commandes (PowerShell)
-Suivre l'amont (arbre propre d'abord, `git status` : `git rebase` refuse un arbre sale) :
-```powershell
-git fetch upstream; git switch main; git merge --ff-only upstream/main; git push origin main
-git switch dev; git tag backup/dev-<date>; git rebase main; git push --force-with-lease origin dev
-```
-Le tag de sauvegarde reste local ; il permet de retrouver un patch fork perdu au rebase.
-Recompiler et réinstaller (toolchain Rust et VS Build Tools sur le disque de données, `RUSTUP_HOME`
-et `CARGO_HOME` en variables utilisateur ; ouvrir un terminal neuf) :
-```powershell
-npm install
-Stop-Process -Name pane -ErrorAction SilentlyContinue
-npm run tauri build          # plusieurs minutes ; target/ pèse plusieurs Go, il reste hors du disque système
-& (Get-ChildItem .\src-tauri\target\release\bundle\nsis\Pane_*_x64-setup.exe | Sort-Object LastWriteTime | Select-Object -Last 1).FullName /S
-```
-La version du setup suit `src-tauri/tauri.conf.json`. Installé dans `%LOCALAPPDATA%\Pane\pane.exe` ;
-réglages et caches dans `%APPDATA%\Pane\`.
-
-## Déboguer
-- **API locale** (lecture seule) : `Invoke-RestMethod http://127.0.0.1:6736/v1/usage` donne l'état
-  de chaque fournisseur (`status: ok|error`, lignes), sans le texte d'erreur. Doc :
-  `docs/local-http-api.md`.
-- **Voir les erreurs** : le build release n'a pas de console. `npm run tauri dev` (console,
-  rechargement à chaud du front) affiche les `eprintln!("[pane] …")` et les erreurs fournisseurs.
-  Fermer d'abord la version installée (même port 6736).
-- **Absence de télémétrie** : la preuve est le code (patchs ci-dessus) ;
-  `Test-Path $env:APPDATA\Pane\telemetry.json` → `False`. `Get-DnsClientCache | Where-Object Entry
-  -match 'posthog|trypane'` vide n'est qu'un indice (le cache expire).
-- **Identifiants réécrits** : quand un jeton expire, Pane le renouvelle et réécrit le fichier
-  d'identifiants de l'outil (copie `.pane-bak` faite avant). Claude Code fait pareil : en cas de
-  conflit, relancer l'outil concerné (par exemple `claude`) pour qu'il se reconnecte.
-- Un fournisseur sans abonnement se désactive dans les réglages plutôt que de déboguer son erreur.
-
-## Erreurs à ne pas reproduire
-- Ne pas installer la toolchain sur le disque système : VS Build Tools a échoué en code 1603, disque
-  plein (2026-09-23).
-- Ne pas écrire de version, de nom d'installeur ni d'état des fournisseurs dans ce fichier : trois
-  faits périmés en moins de 24 h ont dû être corrigés (d2f6bf6, 2026-09-24).
-- Ne pas `git add -A` après un build : `package-lock.json` et `src-tauri/Cargo.toml` salis
-  partiraient avec (constaté depuis le 2026-09-23).
-- Ne pas croire que `main` ou l'app installée suivent l'amont : sans rebase ni recompilation, aucun
-  correctif amont n'arrive (retard mesuré en dizaines de versions le 2026-10-21).
-- Ne pas relancer un login pour un fournisseur qu'on n'utilise plus : le désactiver dans les
-  réglages (la liste des fournisseurs actifs vit dans `HANDOFF.md`).
-
-## Où est l'état
-`HANDOFF.md` local (non versionné) et `git log`.
+## Pièges
+- Toolchain Rust et VS Build Tools sur le disque de données, jamais sur le disque système : échec en code 1603, disque plein (2026-09-23).
+- Pas de version, de nom d'installeur ni d'état des fournisseurs dans ce fichier : trois faits périmés en moins de 24 h (d2f6bf6, 2026-09-24).
+- `main` et l'app installée ne suivent pas l'amont tout seuls : sans rebase ni recompilation aucun correctif n'arrive (180 commits de retard mesurés le 2026-10-28, dizaines de versions le 2026-10-21).
+- `git rebase` refuse un arbre sale : `package-lock.json` et `Cargo.toml` le salissent (`git status` le montre depuis septembre) ; poser un tag `backup/dev-<date>` local avant de rebaser.
+- Squash de la PR #1 sur `origin/dev` (e3c7f51, 2026-10-22) : le `dev` local retardait d'un commit, `git merge --ff-only origin/dev` avant tout rebase.
+- Le build release n'a pas de console et le port 6736 est pris par l'app installée : la fermer avant `npm run tauri dev`.
+- Pane réécrit le fichier d'identifiants de l'outil officiel quand le jeton expire (copie `.pane-bak`) : en cas de conflit avec Claude Code, relancer `claude` pour qu'il se reconnecte.
+- Fournisseur sans abonnement ou inutilisé : le désactiver dans les réglages, ne pas relancer un login (Copilot sans abonnement, Codex `auth.json` périmé, HANDOFF du 2026-09-23).
