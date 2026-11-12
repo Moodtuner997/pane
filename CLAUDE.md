@@ -21,5 +21,5 @@ Enveloppe : PR vers `dev`, fusion si CI verte ; `staging` et `main` n'avancent q
 - `git rebase` refuse un arbre sale : `package-lock.json` et `Cargo.toml` le salissent (`git status` le montre depuis septembre) ; poser un tag `backup/dev-<date>` local avant de rebaser.
 - Squash de la PR #1 sur `origin/dev` (e3c7f51, 2026-10-22) : le `dev` local retardait d'un commit, `git merge --ff-only origin/dev` avant tout rebase.
 - Le build release n'a pas de console et le port 6736 est pris par l'app installée : la fermer avant `npm run tauri dev`.
-- Pane réécrit le fichier d'identifiants de l'outil officiel quand le jeton expire (copie `.pane-bak`) : en cas de conflit avec Claude Code, relancer `claude` pour qu'il se reconnecte.
+- Pane réécrit le fichier d'identifiants de l'outil officiel quand l'API key expire (copie `.pane-bak`) : en cas de conflit avec Claude Code, relancer `claude` pour qu'il se reconnecte.
 - Fournisseur sans abonnement ou inutilisé : le désactiver dans les réglages, ne pas relancer un login (Copilot sans abonnement, Codex `auth.json` périmé, HANDOFF du 2026-09-23).
